@@ -1,0 +1,9 @@
+0.1.0 - 2016-08-26
+------------------
+* Renamed package to econtextapi rather than econtextclient
+* Added a classifyurl binary to easily classify urls in batches from the command line (see econtextapi.bin.classifyurl)
+
+0.0.1 - 2015-12-09
+------------------
+* Added access to keyword retrieval for search phrases, and category id searches
+* Added keyword density mapping - retrieve classification of a search phrase using mapping and keyword density search - can provide more insight over a best-map result

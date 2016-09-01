@@ -1,0 +1,44 @@
+eContext API
+------------
+
+The eContext API provides easy, quick, and accurate taxonomic classification of
+any text content.
+
+Installation
+^^^^^^^^^^^^
+
+Install the eContext API library from source using the following command: 
+
+ $ python setup.py install
+
+An executable will be installed into your /usr/local/bin directory that may be
+used directly from the command line:
+
+ $ echo "Serena Williams Just Grand-Slammed Her Beyonce '7/11' Remake" | econtext-api -u USERNAME -p PASSWORD -t text
+ $ curl -s http://www.popularmechanics.com/science/health/a14760/real-ebola-vaccine/ | econtext-api -u USERNAME -p PASSWORD -t html
+ $ echo "http://www.popularmechanics.com/science/health/a14760/real-ebola-vaccine/" | econtext-api -u USERNAME -p PASSWORD -t url
+
+You can also specify an input file containing the text or HTML you intend to
+classify.
+
+Using the Library
+^^^^^^^^^^^^^^^^^
+
+At the basic level, for each batch of classifiations you would like to run, you
+pass in a `requests.session` object containing authorization and content-type
+headers to the classification object, specify the data, and then run the batch.
+
+    from econtextapi.client import Client
+    from econtextapi.classify import Social
+
+    posts = [
+        "A master class in customer service from Lego. Boy writes to Lego after losing a mini-figure. Here's their reply...",
+        "This makes me realize how little hope there is for the education system in America.",
+        "Perrie just finished decorating the tree I didn't really help :( ha sorry x "
+    ]
+
+    client = Client(USERNAME, PASSWORD)
+    classify = Social(client)
+    classify.set_classify_data(posts)
+    results = classify.get_results()
+
