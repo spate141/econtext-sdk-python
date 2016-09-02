@@ -8,17 +8,16 @@ classification and simply prints matched category names for the provided content
 """
 
 import argparse
-import requests
 import sys
 import logging
 import json
 
+from econtextapi.client import Client
 from econtextapi.classify.html import Html
 from econtextapi.classify.text import Text
 from econtextapi.classify.social import Social
 from econtextapi.classify.url import Url
 from econtextapi.classify.keywords import Keywords
-from econtextapi.density.search import Density
 
 log = logging.getLogger('econtext')
 
@@ -56,34 +55,26 @@ def main():
     else:
         infile = open(options.infile, 'r')
     
-    session = requests.Session()
-    session.auth = (options.username, options.password)
-    session.headers.update({'Content-type':'application/json'})
+    client = Client(options.username, options.password)
     
     if options.type == "text":
-        classify = Text(session)
-        classify.data = {"text":infile.read()}
-          
+        classify = Text(client, infile.read())
     #URL -- Classify a single URL
     elif options.type == "url":
-        classify = Url(session)
-        classify.data = {"url":infile.read().strip()}
+        classify = Url(client, infile.read().strip())
     #KEYWORD -- Classify up to 1000 keywords (1 per line)
     elif options.type == "keywords":
-        classify = Keywords(session)
-        classify.data = {"keywords":[kwd.strip() for kwd in infile.readlines()][:1000]}
+        classify = Keywords(client, [kwd.strip() for kwd in infile.readlines()][:1000])
     #HTML -- Classify a single HTML document
     elif options.type == "html":
-        classify = Html(session)
-        classify.data = {"html":infile.read()}
+        classify = Html(client, infile.read())
     #SOCIAL -- Classify up to 1000 social posts (1 per line)
     elif options.type == "social":
-        classify = Social(session)
-        classify.data = {"social":[social.strip() for social in infile.readlines()][:1000]}
+        classify = Social(client, [social.strip() for social in infile.readlines()][:1000])
     else:
         raise NotImplementedError("{} classification not yet implemented".format(options.type))
     
-    response = classify.classify(True).retrieve_results()
+    response = classify.classify()
     classify.print_summary()
         
     return True

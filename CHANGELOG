@@ -1,4 +1,4 @@
-0.1.0 - 2016-08-26
+0.1.0 - 2016-09-01
 ------------------
 * Renamed package to econtextapi rather than econtextclient
 * Added a classifyurl binary to easily classify urls in batches from the command line (see econtextapi.bin.classifyurl)
