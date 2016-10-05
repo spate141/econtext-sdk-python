@@ -16,7 +16,7 @@ setup (
               'econtext-api = econtextapi.main:main',
               'econtext-classify-keywords= econtextapi.bin.classifykeywords',
               'econtext-classify-social= econtextapi.bin.classifysocial',
-              'econtext-classify-keywords= econtextapi.bin.classifyurl'
+              'econtext-classify-url= econtextapi.bin.classifyurl'
           ]
       }
 
