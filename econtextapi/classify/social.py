@@ -20,6 +20,16 @@ class Social(Classify):
         self.posts = [post for post in response_object['results']]
         return response_object
     
+    def yield_summary(self):
+        self.client.post(self)
+        for i in xrange(0, len(self.classify_data)):
+            post = self.posts[i]
+            data = self.classify_data[i]
+            yield " post: {}".format(data)
+            for scored_category in post['scored_categories']:
+                yield "   * {:5} - {:40}".format(scored_category['score'],
+                                             self.categories[unicode(scored_category['category_id'])]['name'])
+
     def print_summary(self):
         self.client.post(self)
         print "Classifications:"
