@@ -57,6 +57,7 @@ class Client(object):
         return model.response
     
     def get(self, model):
+        # type: (object) -> object
         return self.__call_api('GET', model)
     
     def post(self, model):
