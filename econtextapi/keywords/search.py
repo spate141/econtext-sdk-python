@@ -21,8 +21,8 @@ class Search(ApiCallable):
     the above.
     """
     
-    INNER_WRAPPER = u'keywords'
-    PATH = u'/keywords/search'
+    INNER_WRAPPER = 'keywords'
+    PATH = '/keywords/search'
     SEARCH_PAGE_LIMIT = 10000
     SEARCH_LIMIT = 500000
     
@@ -101,7 +101,7 @@ class Search(ApiCallable):
         Retrieve results from the keywords search call
         """
         self.client.post(self)
-        for page in xrange(1, self.pages+1):
+        for page in range(1, self.pages+1):
             result_page = self.retrieve_page(page)
             yield result_page
 

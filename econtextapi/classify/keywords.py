@@ -26,13 +26,13 @@ class Keywords(Classify):
         return response_object
         
     def print_summary(self):
-        print "Classifications: (time: {:.6} sec)".format(self.total_time())
+        print("Classifications: (time: {:.6} sec)".format(self.total_time()))
         i = 0
         for mappings in self.mappings:
-            mappings = unicode(mappings)
+            mappings = str(mappings)
             if mappings in self.categories:
-                print " * {:40} {:40}".format(self.classify_data[i][:40], self.categories[mappings]['name'])
+                print(" * {:40} {:40}".format(self.classify_data[i][:40], self.categories[mappings]['name']))
             else:
-                print " * {:40} {:40}".format(self.classify_data[i][:40], "")
+                print(" * {:40} {:40}".format(self.classify_data[i][:40], ""))
             i += 1
         

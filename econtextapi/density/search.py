@@ -8,7 +8,7 @@ Provides a common interface to the Classification calls in the API
 import requests
 import json
 import logging
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from econtextapi import RESPONSE_WRAPPER
 from econtextapi.client import Client
@@ -24,8 +24,8 @@ class Density(ApiCallable):
     1) GET a result object given an input string
     """
     
-    INNER_WRAPPER = u'categories'
-    PATH = u'/categories/search'
+    INNER_WRAPPER = 'categories'
+    PATH = '/categories/search'
     
     def __init__(self, client, term=None, limit=10, *args, **kwargs):
         """
@@ -45,7 +45,7 @@ class Density(ApiCallable):
         return self
     
     def set_limit(self, limit=10):
-        if not isinstance(limit, (int,)):
+        if not isinstance(limit, int):
             raise ValueError("Expecting an integer limit")
         self.limit = limit
         return self
@@ -53,7 +53,7 @@ class Density(ApiCallable):
     def get_path(self):
         if self.term is None:
             raise ValueError("No search term specified")
-        return "".join([self.client.baseurl, Density.PATH]) + "/{}".format(urllib.quote(self.term))
+        return "".join([self.client.baseurl, Density.PATH]) + "/{}".format(urllib.parse.quote(self.term))
     
     def get_params(self):
         params = {}
@@ -79,12 +79,12 @@ class Density(ApiCallable):
     
     def print_summary(self):
         self.client.get(self)
-        print "Possible Classifications:"
+        print("Possible Classifications:")
         for category in self.categories:
-            print " * {:40} {:5}".format(category['name'], category['confidence'])
+            print(" * {:40} {:5}".format(category['name'], category['confidence']))
         
         for category in self.categories:
-            print " > ".join(category['path'])
+            print(" > ".join(category['path']))
 
 
 def main():

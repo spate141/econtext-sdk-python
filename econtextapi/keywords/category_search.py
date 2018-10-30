@@ -15,7 +15,7 @@ class CategorySearch(Search):
     def set_categories(self, categories):
         if categories is None:
             return
-        for (category_id, include_branch) in categories.items():
+        for (category_id, include_branch) in list(categories.items()):
             self.__add_category(category_id, include_branch)
     
     def get_term(self):
@@ -74,9 +74,9 @@ def main():
     search = CategorySearch(client, limit=100)
     search.set_categories({options.category: bool(options.branch)})
     page = search.retrieve_page()
-    print "Total Results: {:>10}".format(search.count)
-    print "        Pages: {:>10}".format(search.pages)
-    print "    Page size: {:>10}".format(search.pagesize)
+    print("Total Results: {:>10}".format(search.count))
+    print("        Pages: {:>10}".format(search.pages))
+    print("    Page size: {:>10}".format(search.pagesize))
         
     return True
     

@@ -12,8 +12,8 @@ log = logging.getLogger('econtext')
 
 class Category(ApiCallable):
     
-    INNER_WRAPPER = u'category'
-    PATH = u'/category/{}'
+    INNER_WRAPPER = 'category'
+    PATH = '/category/{}'
     
     def __init__(self, client, category_id=None, *args, **kwargs):
         super(Category, self).__init__()
@@ -33,8 +33,8 @@ class Category(ApiCallable):
         
     def print_summary(self):
         self.client.get(self)
-        print "Category"
-        print self.category
+        print("Category")
+        print(self.category)
 
 def main():
     import argparse

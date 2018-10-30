@@ -12,8 +12,8 @@ log = logging.getLogger('econtext')
 
 class Usage(ApiCallable):
     
-    INNER_WRAPPER = u'user'
-    PATH = u'/user/usage'
+    INNER_WRAPPER = 'user'
+    PATH = '/user/usage'
     
     def __init__(self, client, start_date=None, end_date=None, *args, **kwargs):
         super(Usage, self).__init__()
@@ -54,7 +54,7 @@ class Usage(ApiCallable):
         Retrieve a list of users who have used the API in the given time period
         """
         self.client.get(self)
-        return self.result.get('usage').keys()
+        return list(self.result.get('usage').keys())
     
     def get_total_usage(self):
         self.client.get(self)
@@ -73,7 +73,7 @@ class Usage(ApiCallable):
         user_usage = self.result.get('usage').get(user)
         if user_usage is None:
             return 0
-        return sum(sum(x.values()) for x in user_usage.values())
+        return sum(sum(x.values()) for x in list(user_usage.values()))
         
         
     def process_result(self, response_object):
@@ -84,12 +84,12 @@ class Usage(ApiCallable):
         return response_object
         
     def print_summary(self):
-        print "Total Usage Summary"
-        print " * period from {} to {}".format(self.result.get('start_date'), self.result.get('end_date'))
-        print " * overall usage: {}".format(self.get_total_usage())
-        print " * usage by users:"
-        for user, user_total in self.get_users_totals().items():
-            print "   - {:26}: {:>15}".format(user, user_total)
+        print("Total Usage Summary")
+        print(" * period from {} to {}".format(self.result.get('start_date'), self.result.get('end_date')))
+        print(" * overall usage: {}".format(self.get_total_usage()))
+        print(" * usage by users:")
+        for user, user_total in list(self.get_users_totals().items()):
+            print("   - {:26}: {:>15}".format(user, user_total))
 
 def main():
     import argparse

@@ -65,14 +65,14 @@ def main():
     search = KeywordSearch(client, pagesize=27, limit=100)
     search.set_term(options.phrase)
     page = search.retrieve_page()
-    print "Total Results: {:>10}".format(search.count)
-    print "        Pages: {:>10}".format(search.pages)
-    print "    Page size: {:>10}".format(search.pagesize)
+    print("Total Results: {:>10}".format(search.count))
+    print("        Pages: {:>10}".format(search.pages))
+    print("    Page size: {:>10}".format(search.pagesize))
     
     result_pages = list(search.yield_pages())
     for page in result_pages:
         keywords = page.get_keywords()
-        print "Page {}: {} keywords".format(page.page, len(keywords))
+        print("Page {}: {} keywords".format(page.page, len(keywords)))
         
     return True
     

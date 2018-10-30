@@ -21,7 +21,7 @@ class Text(Classify):
         return response_object
     
     def print_summary(self):
-        print "Classifications:"
+        print("Classifications:")
         for scored_category in self.scored_categories:
-            print " * {:40} {:5}".format(self.categories[unicode(scored_category['category_id'])]['name'], scored_category['score'])
+            print(" * {:40} {:5}".format(self.categories[str(scored_category['category_id'])]['name'], scored_category['score']))
 

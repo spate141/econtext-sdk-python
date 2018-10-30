@@ -2,7 +2,7 @@ from econtextapi.api_callable import ApiCallable
 
 class ResultPage(ApiCallable):
     
-    INNER_WRAPPER = u"keywords"
+    INNER_WRAPPER = "keywords"
     
     def __init__(self, client, result_uri=None, page=1, *args, **kwargs):
         super(ResultPage, self).__init__(client)

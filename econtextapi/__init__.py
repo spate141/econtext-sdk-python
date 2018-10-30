@@ -1,3 +1,3 @@
 
-RESPONSE_WRAPPER = u'econtext'
+RESPONSE_WRAPPER = 'econtext'
 

@@ -22,20 +22,20 @@ class Social(Classify):
     
     def yield_summary(self):
         self.client.post(self)
-        for i in xrange(0, len(self.classify_data)):
+        for i in range(0, len(self.classify_data)):
             post = self.posts[i]
             data = self.classify_data[i]
             yield " post: {}".format(data)
             for scored_category in post['scored_categories']:
                 yield "   * {:5} - {:40}".format(scored_category['score'],
-                                             self.categories[unicode(scored_category['category_id'])]['name'])
+                                             self.categories[str(scored_category['category_id'])]['name'])
 
     def print_summary(self):
         self.client.post(self)
-        print "Classifications:"
-        for i in xrange(0, len(self.classify_data)):
+        print("Classifications:")
+        for i in range(0, len(self.classify_data)):
             post = self.posts[i]
             data = self.classify_data[i]
-            print " POST: {}".format(data)
+            print((" POST: {}".format(data)))
             for scored_category in post['scored_categories']:
-                print "   * {:5} - {:40}".format(scored_category['score'], self.categories[unicode(scored_category['category_id'])]['name'])
+                print(("   * {:5} - {:40}".format(scored_category['score'], self.categories[str(scored_category['category_id'])]['name'])))

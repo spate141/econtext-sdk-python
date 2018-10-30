@@ -47,7 +47,7 @@ class Client(object):
         except Exception as e:
             log.error(e)
             if RESPONSE_WRAPPER not in model.response:
-                log.error(u"ERROR: {}".format(model.response))
+                log.error("ERROR: {}".format(model.response))
             else:
                 error = model.response[RESPONSE_WRAPPER].get('error')
                 if error is not None and 'code' in error and 'message' in error:

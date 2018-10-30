@@ -20,7 +20,7 @@ class Classify(ApiCallable):
        b) if the result object is complete, return the result object
     """
     
-    INNER_WRAPPER = u'classify'
+    INNER_WRAPPER = 'classify'
     PATH = "/classify"
     
     def __init__(self, client, classify_field, classify_data=None, *args, **kwargs):
