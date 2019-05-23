@@ -51,7 +51,7 @@ def f(x):
     try:
         response = classify.classify()
     except:
-        response = None
+        response = classify
     return section, response
 
 def ff(x):
@@ -94,9 +94,8 @@ def main():
     with outfile as file:
         for (section, listitem) in resultset:
             s = s + 1
-            if listitem is None:
-                continue
-            
+            if listitem.result is None:
+                listitem.result = listitem.response
             listitem.result["url"] = urls[section]
             file.write("{}\n".format(json.dumps(listitem.result)))
     
