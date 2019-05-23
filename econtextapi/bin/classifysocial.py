@@ -46,7 +46,10 @@ def f(x):
     """
     section, classify = x
     log.debug("classify/social with {} posts".format(len(classify.classify_data)))
-    response = classify.classify()
+    try:
+        response = classify.classify()
+    except:
+        response = classify
     return section, response
 
 def ff(x):
@@ -96,6 +99,8 @@ def main():
         for (section, classification) in resultset:
             s = s + 1
             log.debug("Processing set {}".format(section+1))
+            if classification.result is None:
+                continue
             k = k + len(classification.result['results'])
             i = 0
             for mapping in classification.result['results']:
