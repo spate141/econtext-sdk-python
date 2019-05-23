@@ -48,7 +48,10 @@ def f(x):
     """
     section, classify = x
     log.debug("classify/url with {} url".format(classify.classify_data))
-    response = classify.classify()
+    try:
+        response = classify.classify()
+    except:
+        response = None
     return section, response
 
 def ff(x):
@@ -91,7 +94,9 @@ def main():
     with outfile as file:
         for (section, listitem) in resultset:
             s = s + 1
-            log.debug("Processing set {}".format(section+1))
+            if listitem is None:
+                continue
+            
             listitem.result["url"] = urls[section]
             file.write("{}\n".format(json.dumps(listitem.result)))
     

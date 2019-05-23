@@ -15,19 +15,25 @@ class Client(object):
     
     session = None
     
-    def __init__(self, username, password, baseurl="https://api.econtext.com/v2", *args, **kwargs):
+    def __init__(self, username, password, baseurl="https://api.econtext.com/v2", workers=1, *args, **kwargs):
         self.username = username
         self.password = password
         self.session = requests.Session()
         self.session.auth = (username, password)
         self.session.headers.update({
-            'Content-type':'application/json',
-            'User-agent':'eContext API Client (Python/1.0)'
+            'Content-type': 'application/json',
+            'User-agent': 'eContext API Client (Python/1.0)'
         })
         self.set_baseurl(baseurl)
+        self.workers = 0
+        self.set_workers(workers)
     
     def set_baseurl(self, baseurl="https://api.econtext.com/v2"):
         self.baseurl = baseurl
+        return self
+    
+    def set_workers(self, workers=1):
+        self.set_workers = workers
         return self
     
     def __call_api(self, type, model):

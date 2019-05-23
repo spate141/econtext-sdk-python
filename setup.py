@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-setup (
+setup(
     name = 'eContext API SDK',
     version = "0.1.0",
     author = 'Jonathan Spalink',
@@ -14,9 +14,9 @@ setup (
     entry_points = {
           'console_scripts': [
               'econtext-api = econtextapi.main:main',
-              'econtext-classify-keywords= econtextapi.bin.classifykeywords',
-              'econtext-classify-social= econtextapi.bin.classifysocial',
-              'econtext-classify-url= econtextapi.bin.classifyurl'
+              'econtext-classify-keywords= econtextapi.bin.classifykeywords:main',
+              'econtext-classify-social= econtextapi.bin.classifysocial:main',
+              'econtext-classify-url= econtextapi.bin.classifyurl:main'
           ]
       }
 

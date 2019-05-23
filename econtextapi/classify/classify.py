@@ -23,7 +23,7 @@ class Classify(ApiCallable):
     INNER_WRAPPER = 'classify'
     PATH = "/classify"
     
-    def __init__(self, client, classify_field, classify_data=None, *args, **kwargs):
+    def __init__(self, client, classify_field, classify_data=None, classify_field_limit=1, *args, **kwargs):
         """
         Create a classification object
         
@@ -31,10 +31,11 @@ class Classify(ApiCallable):
         """
         super(Classify, self).__init__()
         self.client = client
-        self.data = {"async":False}
+        self.data = {"async": False}
         self.classify_field = classify_field
+        self.classify_field_limit = classify_field_limit
         self.classify_data = classify_data
-        self.time = {"start":None, "end":None}
+        self.time = {"start": None, "end": None}
         
     def get_path(self):
         return "".join([self.client.baseurl, Classify.PATH])
@@ -52,7 +53,7 @@ class Classify(ApiCallable):
     
     def classify(self):
         """
-        Classify a set of data
+        Classify all of the data, yielding results as we go
         """
         self.client.post(self)
         return self

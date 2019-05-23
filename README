@@ -42,3 +42,15 @@ headers to the classification object, specify the data, and then run the batch.
     classify.set_classify_data(posts)
     results = classify.get_results()
 
+
+
+
+classify = Social(client)
+classify.set_classify_data(10000_posts)
+for result in classify.get_results():
+  print(result)
+
+
+#  result should contain all data pertinent to _that_ result
+result
+
