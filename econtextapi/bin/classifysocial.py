@@ -1,12 +1,10 @@
-#! /usr/bin/python
-
 usage = """
-Quickly classify lots of social posts by distributing across multiple processors.
+Quickly classify lots of social posts by distributing across multiple threads.
 
 Input file should be a simple text file with one social post per line.
 
 Be careful not to use too many workers at once - at some point it will end up
-putting too much pressure on the API.  Use common sense.
+putting too much pressure on the API.
 """
 
 import argparse
@@ -15,11 +13,14 @@ import logging
 import json
 import time
 
-import multiprocessing
+import threading
+import queue
+
 from econtextapi.client import Client
 from econtextapi.classify import Social
 
-log = logging.getLogger('econtext')
+log = logging.getLogger('econtext.classify-social')
+
 
 def get_log_level(v=0):
     if v is None or v == 0:
@@ -29,6 +30,7 @@ def get_log_level(v=0):
     elif v > 0:
         return logging.INFO
 
+
 def get_log(v):
     log_level = get_log_level(v)
     h = logging.StreamHandler()
@@ -37,28 +39,42 @@ def get_log(v):
     h.setLevel(log_level)
     log.setLevel(log_level)
 
-def f(x):
+
+def f(classify):
     """
-    classify a set of social posts and block until you get the results - print 
+    classify a set of social posts and block until you get the results - print
     them when you get the output
-    
-    @param x: a list of up to 1000 posts
+
+    @param classify: a Classify object
     """
-    section, classify = x
-    log.debug("classify/social with {} posts".format(len(classify.classify_data)))
+    s = time.time()
     try:
         response = classify.classify()
     except:
         response = classify
-    return section, response
+    
+    result = json.dumps({"input": classify.classify_data, "response": classify.response})
+    log.debug("classify/social with %s posts took %0.3f seconds", len(classify.classify_data), (time.time() - s))
+    return result
+
 
 def ff(x):
     return "ff(x): {}".format(x)
 
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in range(0, len(l), n):
-        yield l[i:i+n]
+
+def get_chunk(input_iterator, chunk_size=500):
+    try:
+        chunk = []
+        while True:
+            line = next(input_iterator)
+            chunk.append(line.rstrip())
+            if len(chunk) >= chunk_size:
+                return chunk
+    except:
+        pass
+    
+    if len(chunk) > 0:
+        return chunk
 
 
 def main():
@@ -68,10 +84,12 @@ def main():
     parser.add_argument("-u", dest="username", required=True, action="store", default=None, help="API username")
     parser.add_argument("-p", dest="password", required=True, action="store", default=None, help="API password")
     parser.add_argument("-w", dest="workers", action="store", default=1, help="How many worker processes to use")
+    parser.add_argument("-c", dest="chunk_size", action="store", default=500, help="Number of POSTs per call")
     parser.add_argument("-v", dest="config_verbose", action="count", default=0, help="Be more or less verbose")
     options = parser.parse_args()
     get_log(options.config_verbose)
     
+    start = time.time()
     log.info("Running classification using {} worker processes".format(options.workers))
     
     if options.infile == 'stdin':
@@ -83,38 +101,56 @@ def main():
     else:
         outfile = open(options.outfile, 'w')
     
-    posts = list(chunks([k.strip() for k in infile], 1000))
-    log.info("Total post sections: {}".format(len(posts)))
-    
+    q = queue.Queue(int(options.workers) * 3)
+    r = queue.Queue()  # result queue
     client = Client(options.username, options.password)
-    poolInput = ((i, Social(client, posts[i])) for i in range(0, len(posts)))
     
-    start = time.time()
-    p = multiprocessing.Pool(processes=int(options.workers))
-    resultset = p.imap_unordered(f, poolInput)
+    def worker():
+        while True:
+            item = q.get()
+            if item is None:
+                break
+            response = f(item)
+            r.put(response)
+            q.task_done()
     
-    s = 0
-    k = 0
-    with outfile as file:
-        for (section, classification) in resultset:
-            s = s + 1
-            log.debug("Processing set {}".format(section+1))
-            if classification.result is None:
-                continue
-            k = k + len(classification.result['results'])
-            i = 0
-            for mapping in classification.result['results']:
-                mapping["post"] = posts[section][i]
-                file.write("{}\n".format(json.dumps(mapping)))
-                i = i + 1
+    def output_worker():
+        while True:
+            item = r.get()
+            if item is None:
+                break
+            outfile.write(item)
+            outfile.write("\n")
+            r.task_done()
     
-    elapsed = time.time()-start
+    threads = []
+    for i in range(int(options.workers)):
+        t = threading.Thread(target=worker)
+        t.start()
+        threads.append(t)
+    printer = threading.Thread(target=output_worker)
+    printer.start()
+    
+    while True:
+        x = get_chunk(infile, int(options.chunk_size))
+        if x is None:
+            break
+        q.put(Social(client, x))
+    
+    q.join()
+    for i in range(int(options.workers)):
+        q.put(None)
+    
+    r.join()
+    r.put(None)
+    for t in threads:
+        t.join()
+    printer.join()
+    
+    elapsed = time.time() - start
     log.info("Total time: {}".format(elapsed))
-    log.info("Total keywords: {}".format(k))
-    log.info("Total sets: {}".format(s))
-    log.info("Time per 10k keywords: {}".format(elapsed/(k+.000000001) * 10000))
     return True
-    
+
 
 if __name__ == "__main__":
     main()

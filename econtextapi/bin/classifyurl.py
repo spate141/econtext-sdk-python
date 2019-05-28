@@ -1,27 +1,26 @@
-#! /usr/bin/python
-
 usage = """
-Quickly classify lots of social posts by distributing across multiple processors.
+Quickly classify lots of urls by distributing across multiple threads.
 
-Input file should be a simple text file with one social post per line.
+Input file should be a simple text file with one URL per line.
 
 Be careful not to use too many workers at once - at some point it will end up
 putting too much pressure on the API.  Use common sense.
 """
 
 import argparse
-import requests
 import sys
 import logging
 import json
-import csv
 import time
 
-import multiprocessing
+import threading
+import queue
+
 from econtextapi.client import Client
 from econtextapi.classify import Url
 
-log = logging.getLogger('econtext')
+log = logging.getLogger('econtext.classify-url')
+
 
 def get_log_level(v=0):
     if v is None or v == 0:
@@ -31,6 +30,7 @@ def get_log_level(v=0):
     elif v > 0:
         return logging.INFO
 
+
 def get_log(v):
     log_level = get_log_level(v)
     h = logging.StreamHandler()
@@ -39,20 +39,24 @@ def get_log(v):
     h.setLevel(log_level)
     log.setLevel(log_level)
 
-def f(x):
+
+def f(classify):
     """
-    classify a set of social posts and block until you get the results - print 
+    classify a set of social posts and block until you get the results - print
     them when you get the output
-    
-    @param x: a list of up to 1000 posts
+
+    @param classify: a Classify object
     """
-    section, classify = x
-    log.debug("classify/url with {} url".format(classify.classify_data))
+    s = time.time()
     try:
         response = classify.classify()
     except:
         response = classify
-    return section, response
+    
+    result = json.dumps({"input": classify.classify_data, "response": classify.response})
+    log.debug("classify/url took %0.3f seconds", (time.time() - s))
+    return result
+
 
 def ff(x):
     return "ff(x): {}".format(x)
@@ -69,6 +73,7 @@ def main():
     options = parser.parse_args()
     get_log(options.config_verbose)
     
+    start = time.time()
     log.info("Running classification using {} worker processes".format(options.workers))
     
     if options.infile == 'stdin':
@@ -80,31 +85,58 @@ def main():
     else:
         outfile = open(options.outfile, 'w')
     
-    urls = [k.strip() for k in infile]
-    log.info("Total URLs: {}".format(len(urls)))
-    
+    q = queue.Queue(int(options.workers) * 3)
+    r = queue.Queue()  # result queue
     client = Client(options.username, options.password)
-    poolInput = ((i, Url(client, urls[i])) for i in range(0, len(urls)))
-
-    start = time.time()
-    p = multiprocessing.Pool(processes=int(options.workers))
-    resultset = p.imap_unordered(f, poolInput)
     
-    s = 0
-    with outfile as file:
-        for (section, listitem) in resultset:
-            s = s + 1
-            if listitem.result is None:
-                listitem.result = listitem.response
-            listitem.result["url"] = urls[section]
-            file.write("{}\n".format(json.dumps(listitem.result)))
+    def worker():
+        while True:
+            item = q.get()
+            if item is None:
+                break
+            response = f(item)
+            r.put(response)
+            q.task_done()
     
-    elapsed = time.time()-start
+    def output_worker():
+        while True:
+            item = r.get()
+            if item is None:
+                break
+            outfile.write(item)
+            outfile.write("\n")
+            r.task_done()
+    
+    threads = []
+    for i in range(int(options.workers)):
+        t = threading.Thread(target=worker)
+        t.start()
+        threads.append(t)
+    printer = threading.Thread(target=output_worker)
+    printer.start()
+    
+    while True:
+        try:
+            x = next(infile).rstrip()
+        except:
+            break
+        
+        q.put(Url(client, x))
+    
+    q.join()
+    for i in range(int(options.workers)):
+        q.put(None)
+    
+    r.join()
+    r.put(None)
+    for t in threads:
+        t.join()
+    printer.join()
+    
+    elapsed = time.time() - start
     log.info("Total time: {}".format(elapsed))
-    log.info("Total urls: {}".format(s))
-    log.info("Time per url: {}".format(elapsed/(s+.000000001)))
     return True
-    
+
 
 if __name__ == "__main__":
     main()
