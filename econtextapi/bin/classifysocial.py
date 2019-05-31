@@ -85,6 +85,7 @@ def main():
     parser.add_argument("-p", dest="password", required=True, action="store", default=None, help="API password")
     parser.add_argument("-w", dest="workers", action="store", default=1, help="How many worker processes to use")
     parser.add_argument("-c", dest="chunk_size", action="store", default=500, help="Number of POSTs per call")
+    parser.add_argument("-m", "--meta", dest="meta", default=None, help="Meta data to be included with each call", metavar="JSON")
     parser.add_argument("-v", dest="config_verbose", action="count", default=0, help="Be more or less verbose")
     options = parser.parse_args()
     get_log(options.config_verbose)
@@ -100,6 +101,12 @@ def main():
         outfile = sys.stdout
     else:
         outfile = open(options.outfile, 'w')
+    
+    stream_meta = None
+    if options.meta:
+        meta_file = open(options.meta)
+        stream_meta = json.load(meta_file)
+        log.debug("stream_meta: %s", json.dumps(stream_meta))
     
     q = queue.Queue(int(options.workers) * 3)
     r = queue.Queue()  # result queue
@@ -135,7 +142,9 @@ def main():
         x = get_chunk(infile, int(options.chunk_size))
         if x is None:
             break
-        q.put(Social(client, x))
+        s = Social(client, x)
+        s.data['stream_meta'] = stream_meta
+        q.put(s)
     
     q.join()
     for i in range(int(options.workers)):

@@ -69,6 +69,7 @@ def main():
     parser.add_argument("-u", dest="username", required=True, action="store", default=None, help="API username")
     parser.add_argument("-p", dest="password", required=True, action="store", default=None, help="API password")
     parser.add_argument("-w", dest="workers", action="store", default=1, help="How many worker processes to use")
+    parser.add_argument("-m", "--meta", dest="meta", default=None, help="Meta data to be included with each call", metavar="JSON")
     parser.add_argument("-v", dest="config_verbose", action="count", default=0, help="Be more or less verbose")
     options = parser.parse_args()
     get_log(options.config_verbose)
@@ -84,6 +85,12 @@ def main():
         outfile = sys.stdout
     else:
         outfile = open(options.outfile, 'w')
+    
+    stream_meta = None
+    if options.meta:
+        meta_file = open(options.meta)
+        stream_meta = json.load(meta_file)
+        log.debug("stream_meta: %s", json.dumps(stream_meta))
     
     q = queue.Queue(int(options.workers) * 3)
     r = queue.Queue()  # result queue
@@ -121,7 +128,9 @@ def main():
         except:
             break
         
-        q.put(Url(client, x))
+        u = Url(client, x)
+        u.data['stream_meta'] = stream_meta
+        q.put(u)
     
     q.join()
     for i in range(int(options.workers)):
