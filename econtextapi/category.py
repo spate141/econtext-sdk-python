@@ -25,10 +25,10 @@ class Category(ApiCallable):
     
     def get_category(self):
         self.client.get(self)
-        return self.result.get('category')
+        return self.category
         
     def process_result(self, response_object):
-        self.category = response_object['category']
+        self.category = response_object['categories'][str(self.category_id)]
         return response_object
         
     def print_summary(self):
