@@ -28,10 +28,6 @@ class Parse(ApiCallable):
         }
     
     def process_result(self, response_object):
-        self.category = response_object['categories'][str(self.category_id)]
-        return response_object
-    
-    def process_result(self, response_object):
         """
         Provide categories
         Provide posts: [ {'scored_categories':[...], 'scored_keywords':[...]}, ...]
