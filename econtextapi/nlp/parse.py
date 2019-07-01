@@ -14,18 +14,18 @@ class Parse(ApiCallable):
     INNER_WRAPPER = 'nlp'
     PATH = '/nlp/parse'
     
-    def __init__(self, client, doc_string=None, *args, **kwargs):
+    def __init__(self, client, text=None, *args, **kwargs):
         super(Parse, self).__init__()
         self.client = client
-        self.doc = doc_string
+        self.text = text
+        self.data = {'text': text}
+        self.doc = None
         
     def get_path(self):
         return "".join([self.client.baseurl, Parse.PATH])
     
     def get_data(self):
-        return {
-            'text': self.doc
-        }
+        return self.data
     
     def process_result(self, response_object):
         """

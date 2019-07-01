@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'eContext API SDK',
-    version = "0.1.0",
+    version = "0.1.2",
     author = 'Jonathan Spalink',
     author_email = 'jspalink@info.com',
     description = 'The eContext API provides taxonomic classification of text content',
