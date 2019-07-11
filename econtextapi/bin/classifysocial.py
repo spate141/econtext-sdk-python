@@ -144,6 +144,7 @@ def main():
             break
         s = Social(client, x)
         s.data['stream_meta'] = stream_meta
+        s.data['source_language'] = 'auto'
         q.put(s)
     
     q.join()

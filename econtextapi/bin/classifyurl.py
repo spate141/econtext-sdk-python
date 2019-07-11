@@ -130,6 +130,7 @@ def main():
         
         u = Url(client, x)
         u.data['stream_meta'] = stream_meta
+        u.data['source_language'] = 'auto'
         q.put(u)
     
     q.join()
