@@ -18,6 +18,7 @@ import queue
 
 from econtextapi.client import Client
 from econtextapi.classify import Url
+from econtext.util.resumable_file import ropen
 
 log = logging.getLogger('econtext.classify-url')
 
@@ -80,7 +81,7 @@ def main():
     if options.infile == 'stdin':
         infile = sys.stdin
     else:
-        infile = open(options.infile, 'r')
+        infile = ropen(options.infile)
     if options.outfile == 'stdout':
         outfile = sys.stdout
     else:
