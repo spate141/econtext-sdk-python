@@ -109,7 +109,7 @@ def main():
         stream_meta = json.load(meta_file)
         log.debug("stream_meta: %s", json.dumps(stream_meta))
     
-    q = queue.Queue(int(options.workers) * 3)
+    q = queue.Queue(int(options.workers))
     r = queue.Queue()  # result queue
     client = Client(options.username, options.password)
     
