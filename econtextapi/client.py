@@ -9,7 +9,7 @@ from json import dumps
 from econtextapi import RESPONSE_WRAPPER
 from time import time
 
-log = logging.getLogger('econtext')
+log = logging.getLogger('econtextapi')
 
 class Client(object):
     

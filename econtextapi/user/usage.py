@@ -8,7 +8,7 @@ from econtextapi.client import Client
 from econtextapi.api_callable import ApiCallable
 
 import logging
-log = logging.getLogger('econtext')
+log = logging.getLogger('econtextapi')
 
 class Usage(ApiCallable):
     

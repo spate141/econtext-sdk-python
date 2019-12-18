@@ -14,7 +14,7 @@ from econtextapi import RESPONSE_WRAPPER
 from econtextapi.client import Client
 from econtextapi.api_callable import ApiCallable
 
-log = logging.getLogger('econtext')
+log = logging.getLogger('econtextapi')
 
 class Density(ApiCallable):
     """

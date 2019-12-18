@@ -19,7 +19,7 @@ from econtextapi.classify.social import Social
 from econtextapi.classify.url import Url
 from econtextapi.classify.keywords import Keywords
 
-log = logging.getLogger('econtext')
+log = logging.getLogger('econtextapi')
 
 def get_log_level(v=0):
     if v is None or v == 0:

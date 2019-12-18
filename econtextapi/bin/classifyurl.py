@@ -20,7 +20,7 @@ from econtextapi.client import Client
 from econtextapi.classify import Url
 from econtext.util.resumable_file import ropen
 
-log = logging.getLogger('econtext.classify-url')
+log = logging.getLogger('econtextapi.classify-url')
 
 
 def get_log_level(v=0):

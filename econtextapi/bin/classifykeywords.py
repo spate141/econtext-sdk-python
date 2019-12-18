@@ -1,4 +1,5 @@
 #! /usr/bin/python
+import threading
 
 usage = """
 Quickly classify lots of keywords by distributing across multiple processors.
@@ -17,12 +18,11 @@ import json
 import csv
 import time
 
-import multiprocessing
 from econtextapi.client import Client
 from econtextapi.classify import Keywords
-from econtext.util.resumable_file import ropen
+from econtext.util.files import ropen, sopen
+from econtext.util.log import log
 
-log = logging.getLogger('econtext')
 
 def get_log_level(v=0):
     if v is None or v == 0:
@@ -32,6 +32,7 @@ def get_log_level(v=0):
     elif v > 0:
         return logging.INFO
 
+
 def get_log(v):
     log_level = get_log_level(v)
     h = logging.StreamHandler()
@@ -40,20 +41,27 @@ def get_log(v):
     h.setLevel(log_level)
     log.setLevel(log_level)
 
-def f(x):
+
+def f(classify):
     """
-    classify a set of keywords and block until you get the results - print them when 
-    you get the output
+    classify a set of social posts and block until you get the results - print
+    them when you get the output
+
+    @param classify: a Classify object
+    """
+    try:
+        response = classify.classify()
+    except:
+        log.exception()
+        response = classify
     
-    @param x: a list of up to 1000 keywords
-    """
-    section, classify = x
-    log.debug("classify/keywords with {} keywords".format(len(classify.classify_data)))
-    response = classify.classify()
-    return section, response
+    result = json.dumps({"input": classify.classify_data, "response": classify.response})
+    return result
+
 
 def ff(x):
     return "ff(x): {}".format(x)
+
 
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
@@ -69,48 +77,60 @@ def main():
     parser.add_argument("-p", dest="password", required=True, action="store", default=None, help="API password")
     parser.add_argument("-w", dest="workers", action="store", default=1, help="How many worker processes to use")
     parser.add_argument("-v", dest="config_verbose", action="count", default=0, help="Be more or less verbose")
+    parser.add_argument("-m", "--meta", dest="meta", default=None, help="Meta data to be included with each call", metavar="JSON")
+    parser.add_argument("-b", "--base-url", dest="base_url", default="https://api.econtext.com/v2", help="Use a different base-url", metavar="URL")
     options = parser.parse_args()
     get_log(options.config_verbose)
-    
+    start = time.time()
     log.info("Running classification using {} worker processes".format(options.workers))
     
-    if options.infile == 'stdin':
-        infile = sys.stdin
-    else:
-        infile = ropen(options.infile)
+    infile = ropen(options.infile, batch_size=options.chunk_size)  # resumable input file
     if options.outfile == 'stdout':
         outfile = sys.stdout
     else:
-        outfile = open(options.outfile, 'w')
+        outfile = sopen(options.outfile, 'w')  # threadsafe output file
     
-    keywords = list(chunks([k.strip() for k in infile], 1000))
-    log.info("Total keyword sections: {}".format(len(keywords)))
+    stream_meta = None
+    if options.meta:
+        meta_file = open(options.meta)
+        stream_meta = json.load(meta_file)
+        log.debug("stream_meta: %s", json.dumps(stream_meta))
     
-    client = Client(options.username, options.password)
-    poolInput = ((i, Keywords(client, keywords[i])) for i in range(0, len(keywords)))
+    client = Client(options.username, options.password, baseurl=options.base_url)
     
-    start = time.time()
-    p = multiprocessing.Pool(processes=int(options.workers))
-    resultset = p.imap_unordered(f, poolInput)
+    def worker():
+        while True:
+            try:
+                item = infile.readlines_batch()
+                if not item:
+                    break
+                start_time = time.time()
+                s = Keywords(client, item)
+                s.data['stream_meta'] = stream_meta
+                s.data['source_language'] = 'auto'
+                response = f(s)
+                outfile.write("{}\n".format(response))
+                log.debug("classify/keywords with %s posts took %0.3f seconds", len(s.classify_data), (time.time() - start_time))
+            except:
+                break
     
-    s = 0
-    k = 0
-    with outfile as file:
-        for (section, listitem) in resultset:
-            s = s + 1
-            log.debug("Processing set {}".format(section+1))
-            k = k + len(listitem.result['mappings'])
-            i = 0
-            for mapping in listitem.result['mappings']:
-                r = {"keyword":keywords[section][i], "mapping":mapping}
-                file.write("{}\n".format(json.dumps(r)))
-                i = i + 1
+    threads = []
+    for i in range(int(options.workers)):
+        t = threading.Thread(target=worker)
+        t.start()
+        threads.append(t)
     
-    elapsed = time.time()-start
+    try:
+        for t in threads:
+            t.join()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        infile.close()
+        outfile.close()
+    
+    elapsed = time.time() - start
     log.info("Total time: {}".format(elapsed))
-    log.info("Total keywords: {}".format(k))
-    log.info("Total sets: {}".format(s))
-    log.info("Time per 10k keywords: {}".format(elapsed/(k+.000000001) * 10000))
     return True
     
 

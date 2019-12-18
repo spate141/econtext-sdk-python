@@ -5,7 +5,7 @@ import logging
 from econtextapi.client import Client
 from econtextapi.keywords.search import Search
 
-log = logging.getLogger('econtext')
+log = logging.getLogger('econtextapi')
 
 class KeywordSearch(Search):
     

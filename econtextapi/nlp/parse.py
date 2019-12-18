@@ -7,7 +7,7 @@ from econtextapi.api_callable import ApiCallable
 import json
 import logging
 
-log = logging.getLogger('econtext')
+log = logging.getLogger('econtextapi')
 
 
 class Parse(ApiCallable):

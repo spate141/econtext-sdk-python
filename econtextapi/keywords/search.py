@@ -1,7 +1,7 @@
 import requests
 import json
 import logging
-log = logging.getLogger('econtext')
+log = logging.getLogger('econtextapi')
 
 
 from econtextapi import RESPONSE_WRAPPER

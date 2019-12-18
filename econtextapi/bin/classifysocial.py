@@ -18,9 +18,9 @@ import queue
 
 from econtextapi.client import Client
 from econtextapi.classify import Social
-from econtext.util.resumable_file import ropen
+from econtext.util.files import ropen, sopen
 
-log = logging.getLogger('econtext.classify-social')
+log = logging.getLogger('econtextapi.classify-social')
 
 
 def get_log_level(v=0):
@@ -48,14 +48,13 @@ def f(classify):
 
     @param classify: a Classify object
     """
-    s = time.time()
     try:
         response = classify.classify()
     except:
+        log.exception()
         response = classify
     
     result = json.dumps({"input": classify.classify_data, "response": classify.response})
-    log.debug("classify/social with %s posts took %0.3f seconds", len(classify.classify_data), (time.time() - s))
     return result
 
 
@@ -80,28 +79,26 @@ def get_chunk(input_iterator, chunk_size=500):
 
 def main():
     parser = argparse.ArgumentParser(description=usage)
-    parser.add_argument("-i", "--in", dest="infile", default="stdin", help="Input file", metavar="PATH")
+    parser.add_argument("-i", "--in", dest="infile", default=None, help="Input file", metavar="PATH")
     parser.add_argument("-o", "--out", dest="outfile", default="stdout", help="Output file", metavar="PATH")
     parser.add_argument("-u", dest="username", required=True, action="store", default=None, help="API username")
     parser.add_argument("-p", dest="password", required=True, action="store", default=None, help="API password")
     parser.add_argument("-w", dest="workers", action="store", default=1, help="How many worker processes to use")
-    parser.add_argument("-c", dest="chunk_size", action="store", default=500, help="Number of POSTs per call")
+    parser.add_argument("-c", dest="chunk_size", action="store", type=int, default=500, help="Number of POSTs per call")
     parser.add_argument("-m", "--meta", dest="meta", default=None, help="Meta data to be included with each call", metavar="JSON")
     parser.add_argument("-v", dest="config_verbose", action="count", default=0, help="Be more or less verbose")
+    parser.add_argument("-b", "--base-url", dest="base_url", default="https://api.econtext.com/v2", help="Use a different base-url", metavar="URL")
     options = parser.parse_args()
     get_log(options.config_verbose)
     
     start = time.time()
     log.info("Running classification using {} worker processes".format(options.workers))
     
-    if options.infile == 'stdin':
-        infile = sys.stdin
-    else:
-        infile = ropen(options.infile)
+    infile = ropen(options.infile, batch_size=options.chunk_size)  # resumable input file
     if options.outfile == 'stdout':
         outfile = sys.stdout
     else:
-        outfile = open(options.outfile, 'w')
+        outfile = sopen(options.outfile, 'w')  # threadsafe output file
     
     stream_meta = None
     if options.meta:
@@ -109,54 +106,38 @@ def main():
         stream_meta = json.load(meta_file)
         log.debug("stream_meta: %s", json.dumps(stream_meta))
     
-    q = queue.Queue(int(options.workers))
-    r = queue.Queue()  # result queue
-    client = Client(options.username, options.password)
+    client = Client(options.username, options.password, baseurl=options.base_url)
     
     def worker():
         while True:
-            item = q.get()
-            if item is None:
+            try:
+                item = infile.readlines_batch()
+                if not item:
+                    break
+                start_time = time.time()
+                s = Social(client, item)
+                s.data['stream_meta'] = stream_meta
+                s.data['source_language'] = 'auto'
+                response = f(s)
+                outfile.write("{}\n".format(response))
+                log.debug("classify/social with %s posts took %0.3f seconds", len(s.classify_data), (time.time() - start_time))
+            except:
                 break
-            response = f(item)
-            r.put(response)
-            q.task_done()
-    
-    def output_worker():
-        while True:
-            item = r.get()
-            if item is None:
-                break
-            outfile.write(item)
-            outfile.write("\n")
-            r.task_done()
     
     threads = []
     for i in range(int(options.workers)):
         t = threading.Thread(target=worker)
         t.start()
         threads.append(t)
-    printer = threading.Thread(target=output_worker)
-    printer.start()
-    
-    while True:
-        x = get_chunk(infile, int(options.chunk_size))
-        if x is None:
-            break
-        s = Social(client, x)
-        s.data['stream_meta'] = stream_meta
-        s.data['source_language'] = 'auto'
-        q.put(s)
-    
-    q.join()
-    for i in range(int(options.workers)):
-        q.put(None)
-    
-    r.join()
-    r.put(None)
-    for t in threads:
-        t.join()
-    printer.join()
+
+    try:
+        for t in threads:
+            t.join()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        infile.close()
+        outfile.close()
     
     elapsed = time.time() - start
     log.info("Total time: {}".format(elapsed))
