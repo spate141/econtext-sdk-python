@@ -33,7 +33,7 @@ class Client(object):
         return self
     
     def set_workers(self, workers=1):
-        self.set_workers = workers
+        self.workers = workers
         return self
     
     def __call_api(self, type, model):
