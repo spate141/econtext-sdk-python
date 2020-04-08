@@ -70,6 +70,7 @@ def main():
     parser.add_argument("-u", dest="username", required=True, action="store", default=None, help="API username")
     parser.add_argument("-p", dest="password", required=True, action="store", default=None, help="API password")
     parser.add_argument("-w", dest="workers", action="store", default=1, help="How many worker processes to use")
+    parser.add_argument("-c", dest="nocache", default=False, action="store_true", help="Ignore cached URLs")
     parser.add_argument("-m", "--meta", dest="meta", default=None, help="Meta data to be included with each call", metavar="JSON")
     parser.add_argument("-v", dest="config_verbose", action="count", default=0, help="Be more or less verbose")
     options = parser.parse_args()
@@ -132,6 +133,10 @@ def main():
         u = Url(client, x)
         u.data['stream_meta'] = stream_meta
         u.data['source_language'] = 'auto'
+        
+        if options.nocache:
+            u.data['cache_skip'] = true
+        
         q.put(u)
     
     q.join()
