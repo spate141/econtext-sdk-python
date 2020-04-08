@@ -135,7 +135,7 @@ def main():
         u.data['source_language'] = 'auto'
         
         if options.nocache:
-            u.data['cache_skip'] = true
+            u.data['cache_skip'] = True
         
         q.put(u)
     
