@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name = 'eContext API SDK',
+    name = 'econtextapi',
     version = "0.1.2",
     author = 'Jonathan Spalink',
     author_email = 'jspalink@info.com',
